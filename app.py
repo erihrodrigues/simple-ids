@@ -54,8 +54,19 @@ def iniciar_ids(interface):
 
 if __name__ == "__main__":
     interfaces = listar_interfaces()
-    print("\nDigite o número da interface que deseja monitorar: ", end="")
-    escolha = int(input())
+
+    # Valida se o usuário digitou um número válido
+    while True:
+        print("\nDigite o número da interface que deseja monitorar: ", end="")
+        try:
+            escolha = int(input())
+            if escolha < 0 or escolha >= len(interfaces):
+                print("❌ Número fora do intervalo! Tente novamente.")
+            else:
+                break  # saiu do loop, número válido
+        except ValueError:
+            print("❌ Digite apenas números!")
+
     interface_escolhida = interfaces[escolha]
 
     # Thread = linha de execução paralela
