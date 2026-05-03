@@ -51,7 +51,7 @@ root@erica:~/simple-ids$ ls features/
 ## 🖥️ Dashboard
 
 <div align="center">
-  <img src="assets/dashboard.png" alt="Simple IDS Dashboard" width="100%"/>
+  <img src="assets/dashboard.gif" alt="Simple IDS Dashboard" width="100%"/>
 </div>
 
 ---
