@@ -210,55 +210,79 @@
 
     <!-- Rodapé com cursor piscando -->
     <div class="footer">
-        Session active — alertas.log recording... <span class="cursor">█</span>
-    </div>
+    Session active — alertas.log recording... <span class="cursor">█</span>
+    <br>
+    <a href="https://github.com/erihrodrigues" 
+       target="_blank" 
+       style="color: #1a3a2a; text-decoration: none; letter-spacing: 1px;">
+        // made by @erihrodrigues
+    </a>
+</div>
 
     <script>
-        function atualizarAlertas() {
-            // Busca os alertas na rota /alertas do Flask
-            fetch("/alertas")
-                .then(response => response.json())  // converte a resposta para objeto JS
-                .then(dados => {
-                    const tabela = document.getElementById("tabela-alertas");
+    // Guarda a quantidade de alertas da última atualização
+    let totalAnterior = 0;
 
-                    // Atualiza os números nos cards de estatísticas
-                    document.getElementById("total").textContent = dados.length;
+    // Cria o contexto de áudio do navegador
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-                    // filter() conta só os alertas do tipo especificado
-                    document.getElementById("count-port-scan").textContent =
-                        dados.filter(a => a.tipo === "Port Scan").length;
-                    document.getElementById("count-syn-flood").textContent =
-                        dados.filter(a => a.tipo === "SYN Flood").length;
+    function tocarBip() {
+        // Cria um oscilador — gera o som
+        const oscilador = audioCtx.createOscillator();
+        const ganho = audioCtx.createGain();
 
-                    // Se não há alertas ainda, não mexe na tabela
-                    if (dados.length === 0) return;
+        oscilador.connect(ganho);
+        ganho.connect(audioCtx.destination);
 
-                    // [...dados] cria uma cópia do array para não alterar o original
-                    // .reverse() inverte a ordem — mais recente primeiro
-                    tabela.innerHTML = "";
-                    [...dados].reverse().forEach(alerta => {
-                        // Converte o tipo para classe CSS (ex: "Port Scan" -> "port-scan")
-                        const classe = alerta.tipo.toLowerCase().replace(" ", "-");
+        oscilador.type = 'square';       // tipo de onda — soa como terminal
+        oscilador.frequency.setValueAtTime(880, audioCtx.currentTime); // frequência do bip
+        ganho.gain.setValueAtTime(0.1, audioCtx.currentTime);          // volume baixo
+        ganho.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3); // fade out
 
-                        // Adiciona uma linha na tabela para cada alerta
-                        tabela.innerHTML += `
-                            <tr>
-                                <td>${alerta.horario}</td>
-                                <td><span class="tag ${classe}">${alerta.tipo.toUpperCase()}</span></td>
-                                <td>${alerta.ip}</td>
-                                <td>${alerta.detalhes}</td>
-                            </tr>
-                        `;
-                    });
+        oscilador.start(audioCtx.currentTime);
+        oscilador.stop(audioCtx.currentTime + 0.3); // dura 0.3 segundos
+    }
+
+    function atualizarAlertas() {
+        fetch("/alertas")
+            .then(response => response.json())
+            .then(dados => {
+                const tabela = document.getElementById("tabela-alertas");
+
+                // Se chegou alerta novo, toca o bip
+                if (dados.length > totalAnterior) {
+                    tocarBip();
+                }
+                totalAnterior = dados.length;
+
+                // Atualiza os cards de estatísticas
+                document.getElementById("total").textContent = dados.length;
+                document.getElementById("count-port-scan").textContent =
+                    dados.filter(a => a.tipo === "Port Scan").length;
+                document.getElementById("count-syn-flood").textContent =
+                    dados.filter(a => a.tipo === "SYN Flood").length;
+
+                if (dados.length === 0) return;
+
+                // Preenche a tabela do mais recente para o mais antigo
+                tabela.innerHTML = "";
+                [...dados].reverse().forEach(alerta => {
+                    const classe = alerta.tipo.toLowerCase().replace(" ", "-");
+                    tabela.innerHTML += `
+                        <tr>
+                            <td>${alerta.horario}</td>
+                            <td><span class="tag ${classe}">${alerta.tipo.toUpperCase()}</span></td>
+                            <td>${alerta.ip}</td>
+                            <td>${alerta.detalhes}</td>
+                        </tr>
+                    `;
                 });
-        }
+            });
+    }
 
-        // Chama atualizarAlertas() a cada 2000ms (2 segundos) automaticamente
-        setInterval(atualizarAlertas, 2000);
-
-        // Chama imediatamente ao carregar a página, sem esperar os 2 segundos
-        atualizarAlertas();
-    </script>
+    setInterval(atualizarAlertas, 2000);
+    atualizarAlertas();
+</script>
 
 </body>
 </html>
