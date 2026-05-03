@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple IDS - Dashboard</title>
+
+    <!-- Fonte monoespaçada estilo terminal, carregada do Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
+    <style>
+        /* Remove margens e paddings padrão do navegador */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        /* Fundo preto, fonte de terminal, cor verde */
+        body {
+            background: #0a0a0a;
+            font-family: 'Share Tech Mono', 'Courier New', monospace;
+            color: #00ff99;
+            min-height: 100vh;
+            padding: 24px;
+        }
+
+        /* Barra superior estilo janela de terminal (macOS) */
+        .topbar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #1a3a2a;
+            padding-bottom: 12px;
+        }
+
+        /* Bolinhas coloridas decorativas (vermelho, amarelo, verde) */
+        .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+        .dot-red    { background: #ff5f57; }
+        .dot-yellow { background: #febc2e; }
+        .dot-green  { background: #28c840; }
+
+        .topbar-title {
+            font-size: 13px;
+            color: #00ff99;
+            margin-left: 8px;
+            letter-spacing: 1px;
+        }
+
+        /* Cabeçalho central com prompt e título */
+        .header { text-align: center; margin-bottom: 24px; }
+
+        /* Linha de comando falsa — só visual */
+        .header .prompt { font-size: 13px; color: #555; }
+
+        .header h1 {
+            font-size: 22px;
+            color: #00ff99;
+            margin: 4px 0 2px;
+            letter-spacing: 2px;
+        }
+
+        .header .sub { font-size: 12px; color: #3a7a55; }
+
+        /* Grid com 3 cards de estatísticas lado a lado */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: #0f1f17;
+            border: 1px solid #1a3a2a;
+            border-radius: 6px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .stat-label { font-size: 11px; color: #3a7a55; margin-bottom: 4px; }
+        .stat-value { font-size: 22px; color: #00ff99; }
+        .stat-value.orange { color: #ff9900; }  /* Port Scan */
+        .stat-value.red    { color: #ff4444; }  /* SYN Flood */
+        .stat-value.purple { color: #aa44ff; }  /* ICMP Flood */
+
+        /* Barra de status com bolinha piscando */
+        .status-bar {
+            font-size: 12px;
+            color: #3a7a55;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Bolinha que pisca para indicar que está ativo */
+        .blink {
+            display: inline-block;
+            width: 8px; height: 8px;
+            background: #00ff99;
+            border-radius: 50%;
+            animation: blink 1.2s infinite;
+        }
+
+        /* Animação de piscar: some e aparece */
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+        /* Tabela de alertas */
+        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+
+        thead tr {
+            background: #0f1f17;
+            border-bottom: 1px solid #1a3a2a;
+        }
+
+        th {
+            color: #3a7a55;
+            padding: 8px 10px;
+            text-align: left;
+            font-weight: normal;
+            letter-spacing: 1px;
+            font-size: 11px;
+        }
+
+        td { padding: 8px 10px; border-bottom: 1px solid #111; }
+
+        /* Destaca a linha ao passar o mouse */
+        tr:hover td { background: #0f1f17; }
+
+        /* Tags coloridas para cada tipo de ataque */
+        .tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            letter-spacing: 1px;
+        }
+
+        .port-scan  { color: #ff9900; border: 1px solid #ff990044; background: #ff990011; }
+        .syn-flood  { color: #ff4444; border: 1px solid #ff444444; background: #ff444411; }
+        .icmp-flood { color: #aa44ff; border: 1px solid #aa44ff44; background: #aa44ff11; }
+
+        .empty-row { text-align: center; color: #1a3a2a; padding: 20px; }
+
+        .footer {
+            margin-top: 20px;
+            font-size: 11px;
+            color: #1a3a2a;
+            text-align: right;
+        }
+
+        /* Cursor piscando no rodapé */
+        .cursor { animation: blink 1s infinite; }
+    </style>
+</head>
+<body>
+
+    <!-- Barra superior estilo terminal -->
+    <div class="topbar">
+        <span class="dot dot-red"></span>
+        <span class="dot dot-yellow"></span>
+        <span class="dot dot-green"></span>
+        <span class="topbar-title">root@erica: ~/simple-ids</span>
+    </div>
+
+    <!-- Cabeçalho com prompt falso e título -->
+    <div class="header">
+        <div class="prompt">root@erica:~$ python app.py --monitor</div>
+        <h1>[ SIMPLE IDS ]</h1>
+        <div class="sub">Intrusion Detection System — Network Monitor v1.0</div>
+    </div>
+
+    <!-- Cards de estatísticas — valores atualizados pelo JavaScript -->
+    <div class="stats">
+        <div class="stat-card">
+            <div class="stat-label">// TOTAL ALERTS</div>
+            <div class="stat-value" id="total">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">// PORT SCAN</div>
+            <div class="stat-value orange" id="count-port-scan">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">// SYN FLOOD</div>
+            <div class="stat-value red" id="count-syn-flood">0</div>
+        </div>
+    </div>
+
+    <!-- Indicador de status com bolinha piscando -->
+    <div class="status-bar">
+        <span class="blink"></span>
+        <span id="status-text">monitoring network — press CTRL+C to stop</span>
+    </div>
+
+    <!-- Tabela de alertas — preenchida dinamicamente pelo JavaScript -->
+    <table>
+        <thead>
+            <tr>
+                <th>// TIMESTAMP</th>
+                <th>// TYPE</th>
+                <th>// SRC IP</th>
+                <th>// DETAILS</th>
+            </tr>
+        </thead>
+        <tbody id="tabela-alertas">
+            <!-- Mensagem inicial enquanto não há alertas -->
+            <tr>
+                <td colspan="4" class="empty-row">awaiting threats...</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- Rodapé com cursor piscando -->
+    <div class="footer">
+        Session active — alertas.log recording... <span class="cursor">█</span>
+    </div>
+
+    <script>
+        function atualizarAlertas() {
+            // Busca os alertas na rota /alertas do Flask
+            fetch("/alertas")
+                .then(response => response.json())  // converte a resposta para objeto JS
+                .then(dados => {
+                    const tabela = document.getElementById("tabela-alertas");
+
+                    // Atualiza os números nos cards de estatísticas
+                    document.getElementById("total").textContent = dados.length;
+
+                    // filter() conta só os alertas do tipo especificado
+                    document.getElementById("count-port-scan").textContent =
+                        dados.filter(a => a.tipo === "Port Scan").length;
+                    document.getElementById("count-syn-flood").textContent =
+                        dados.filter(a => a.tipo === "SYN Flood").length;
+
+                    // Se não há alertas ainda, não mexe na tabela
+                    if (dados.length === 0) return;
+
+                    // [...dados] cria uma cópia do array para não alterar o original
+                    // .reverse() inverte a ordem — mais recente primeiro
+                    tabela.innerHTML = "";
+                    [...dados].reverse().forEach(alerta => {
+                        // Converte o tipo para classe CSS (ex: "Port Scan" -> "port-scan")
+                        const classe = alerta.tipo.toLowerCase().replace(" ", "-");
+
+                        // Adiciona uma linha na tabela para cada alerta
+                        tabela.innerHTML += `
+                            <tr>
+                                <td>${alerta.horario}</td>
+                                <td><span class="tag ${classe}">${alerta.tipo.toUpperCase()}</span></td>
+                                <td>${alerta.ip}</td>
+                                <td>${alerta.detalhes}</td>
+                            </tr>
+                        `;
+                    });
+                });
+        }
+
+        // Chama atualizarAlertas() a cada 2000ms (2 segundos) automaticamente
+        setInterval(atualizarAlertas, 2000);
+
+        // Chama imediatamente ao carregar a página, sem esperar os 2 segundos
+        atualizarAlertas();
+    </script>
+
+</body>
+</html>
