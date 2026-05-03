@@ -13,6 +13,20 @@ LIMITE_PORT_SCAN = 15   # 15 portas únicas = suspeito
 LIMITE_ICMP_FLOOD = 10  # 10 pings em 2 segundos = suspeito
 LIMITE_SYN_FLOOD = 20   # 20 pacotes SYN em 3 segundos = suspeito
 
+def limpar_historicos_antigos(agora):
+    # Remove IPs que não geram tráfego há mais de 60 segundos
+    for historico in [historico_icmp, historico_syn]:
+        ips_para_remover = [ip for ip, timestamps in historico.items() 
+                           if not timestamps or agora - max(timestamps) > 60]
+        for ip in ips_para_remover:
+            del historico[ip]
+    
+    # Para portas, remove IPs com conjunto vazio
+    ips_para_remover = [ip for ip, portas in historico_portas.items() 
+                       if not portas]
+    for ip in ips_para_remover:
+        del historico_portas[ip]
+
 def analisar_pacote(pacote):
     # Importa as camadas do Scapy que vamos inspecionar
     # IP = camada de rede (contém IPs de origem e destino)
@@ -26,6 +40,9 @@ def analisar_pacote(pacote):
 
     ip_origem = pacote[IP].src   # IP de quem enviou o pacote
     agora = time.time()          # horário atual em segundos (ex: 1746291483.42)
+
+    # Limpa históricos de IPs inativos a cada pacote
+    limpar_historicos_antigos(agora)
 
     # --- Detecção 1: Port Scan ---
     # Port Scan = alguém tentando descobrir quais portas estão abertas

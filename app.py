@@ -26,6 +26,8 @@ def registrar_alerta_web(tipo, ip_origem, detalhes):
         "detalhes": detalhes
     }
     alertas.append(alerta)  # adiciona o alerta na lista global
+    if len(alertas) > 100:
+        alertas.pop(0)  # remove o mais antigo quando passar de 100
     print(f"[ALERTA WEB] {tipo} | {ip_origem}")  # confirma no terminal
 
 # Rota "/" = página principal — acessada em http://localhost:5000
