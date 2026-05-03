@@ -72,14 +72,17 @@ npcap        — windows packet capture driver
 ---
 
 ## 📁 Project Structure / Estrutura
+
+```
 simple-ids/
 ├── app.py          → Flask server + web alert handler
 ├── sniffer.py      → Network interface listing and packet capture
 ├── detector.py     → Attack detection logic (Port Scan, SYN Flood, ICMP Flood)
 ├── logger.py       → Terminal alert logging and .log file writing
-├── alertas.log     → Generated alert log file
+├── alertas.log     → Generated alert log file (auto-created)
 └── templates/
-└── index.html  → Terminal-style web dashboard
+    └── index.html  → Terminal-style web dashboard
+```
 
 ---
 
