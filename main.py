@@ -10,16 +10,17 @@ def main():
     # Chama a função do sniffer.py que lista e exibe as interfaces disponíveis
     interfaces = listar_interfaces()
 
-    print("\nDigite o número da interface que deseja monitorar: ", end="")
-    
-    # int() converte o que o usuário digitou (texto) para número inteiro
-    escolha = int(input())
-
-    # Verifica se o número digitado existe na lista
-    # ex: se há 10 interfaces, só aceita de 0 a 9
-    if escolha < 0 or escolha >= len(interfaces):
-        print("❌ Opção inválida!")
-        return  # encerra a função se a escolha for inválida
+    while True:
+        print("\nDigite o número da interface que deseja monitorar: ", end="")
+        try:
+            escolha = int(input())
+            if escolha < 0 or escolha >= len(interfaces):
+                print("❌ Número fora do intervalo! Tente novamente.")
+            else:
+                break  # saiu do loop, número válido
+        except ValueError:
+            # ValueError acontece quando o usuário digita uma letra em vez de número
+            print("❌ Digite apenas números!")
 
     # Pega o nome da interface pelo índice escolhido
     interface_escolhida = interfaces[escolha]
